@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+ai_resume
+# Virtual environment
+resume/
+venv/
+.venv/
+
+# Uploaded resumes
+uploads/*
+ai_resume/uploads/*
+
+# Environment variables
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
