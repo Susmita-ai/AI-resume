@@ -1,121 +1,342 @@
 import os
-import tempfile
-import streamlit as st
+import shutil
+import uuid
 
-from utils.parser import extract_text_from_pdf, extract_text_from_image
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+
+from utils.parser import (
+    extract_text_from_pdf,
+    extract_text_from_image
+)
+
 from utils.extractor import (
     extract_name,
     extract_email,
     extract_phone,
     extract_skills,
-    extract_education,
+    extract_education
 )
+
 from utils.predictor import predict_job_role
 from utils.scorer import calculate_score
-from utils.report_generator import generate_pdf_report
 
-st.set_page_config(page_title="AI Resume Analyzer", page_icon="📄", layout="centered")
 
-st.title("📄 AI Resume Analyzer")
-st.write("Upload your resume (PDF, JPG, or PNG) and get an instant analysis.")
+# --------------------------------------------------
+# FastAPI Application
+# --------------------------------------------------
 
-uploaded_file = st.file_uploader(
-    "Upload your resume",
-    type=["pdf", "jpg", "jpeg", "png"],
+app = FastAPI(
+    title="AI Resume Analyzer API",
+    description="AI-powered Resume Analysis and Job Role Prediction API",
+    version="1.0.0"
 )
 
-if uploaded_file is not None:
-    file_ext = uploaded_file.name.split(".")[-1].lower()
 
-    # Save the uploaded file to a temp location so parser functions
-    # (which expect a file path) can read it.
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as tmp_file:
-        tmp_file.write(uploaded_file.getbuffer())
-        temp_path = tmp_file.name
+# --------------------------------------------------
+# CORS
+# --------------------------------------------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# --------------------------------------------------
+# Upload Folder
+# --------------------------------------------------
+
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+# --------------------------------------------------
+# Home Route
+# --------------------------------------------------
+
+@app.get("/")
+def home():
+
+    return {
+        "message": "AI Resume Analyzer API is running",
+        "status": "success"
+    }
+
+
+# --------------------------------------------------
+# Resume Analysis API
+# --------------------------------------------------
+
+@app.post("/analyze-resume")
+async def analyze_resume(
+    file: UploadFile = File(...)
+):
+
+    # ----------------------------------------------
+    # 1. Check file
+    # ----------------------------------------------
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="No file uploaded."
+        )
+
+
+    # ----------------------------------------------
+    # 2. Check extension
+    # ----------------------------------------------
+
+    file_extension = (
+        file.filename
+        .split(".")[-1]
+        .lower()
+    )
+
+    allowed_extensions = {
+        "pdf",
+        "jpg",
+        "jpeg",
+        "png"
+    }
+
+    if file_extension not in allowed_extensions:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid file format. "
+                "Only PDF, JPG, JPEG and PNG are allowed."
+            )
+        )
+
+
+    # ----------------------------------------------
+    # 3. Create unique filename
+    # ----------------------------------------------
+
+    unique_filename = (
+        f"{uuid.uuid4()}.{file_extension}"
+    )
+
+    file_path = os.path.join(
+        UPLOAD_FOLDER,
+        unique_filename
+    )
+
+
+    # ----------------------------------------------
+    # 4. Save uploaded file
+    # ----------------------------------------------
+
+    try:
+
+        with open(file_path, "wb") as buffer:
+
+            shutil.copyfileobj(
+                file.file,
+                buffer
+            )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not save file: {str(e)}"
+        )
+
+
+    # ----------------------------------------------
+    # 5. Extract text
+    # ----------------------------------------------
 
     resume_text = ""
-    with st.spinner("Reading your resume..."):
-        try:
-            if file_ext == "pdf":
-                resume_text = extract_text_from_pdf(temp_path)
-            else:
-                resume_text = extract_text_from_image(temp_path)
-        except Exception as e:
-            st.error(
-                f"Couldn't read this file — it may be corrupted or not a "
-                f"valid {file_ext.upper()}. ({e})"
+
+    try:
+
+        if file_extension == "pdf":
+
+            resume_text = extract_text_from_pdf(
+                file_path
             )
 
-    os.remove(temp_path)
+        else:
+
+            resume_text = extract_text_from_image(
+                file_path
+            )
+
+    except Exception as e:
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not read resume: {str(e)}"
+        )
+
+
+    # ----------------------------------------------
+    # 6. Check extracted text
+    # ----------------------------------------------
 
     if not resume_text or not resume_text.strip():
-        st.error(
-            "Couldn't extract any text from this file. "
-            "Please make sure it's a valid, non-empty, readable resume."
-        )
-    else:
-        with st.spinner("Analyzing resume..."):
-            name = extract_name(resume_text)
-            email = extract_email(resume_text)
-            phone = extract_phone(resume_text)
-            skills = extract_skills(resume_text)
-            education = extract_education(resume_text)
-            score = calculate_score(skills, education)
 
-            # Must match the columns used when the model was trained.
-            resume_data = {
-                "Skills": ", ".join(skills),
-                "Experience (Years)": 2,
-                "Education": education[0] if education else "b.tech",
-                "Certifications": "No",
-                "Salary Expectation ($)": 50000,
-                "Projects Count": 3,
-                "AI Score (0-100)": score,
-            }
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
-            predicted_role = "Not Available"
-            try:
-                predicted_role = predict_job_role(resume_data)
-            except Exception as e:
-                st.warning(f"Prediction failed: {e}")
-
-        st.success("Analysis complete!")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("👤 Extracted Info")
-            st.write(f"**Name:** {name}")
-            st.write(f"**Email:** {email}")
-            st.write(f"**Phone:** {phone}")
-            st.write(
-                f"**Education:** {', '.join(education) if education else 'Not Found'}"
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Could not extract text from resume. "
+                "Please upload a readable resume."
             )
-
-        with col2:
-            st.subheader("📊 Results")
-            st.metric("Resume Score", f"{score}/100")
-            st.write(f"**Predicted Job Role:** {predicted_role}")
-
-        st.subheader("🛠️ Skills Detected")
-        st.write(", ".join(skills) if skills else "No matching skills found.")
-
-        with st.expander("View extracted raw text"):
-            st.text(resume_text)
-
-        pdf_bytes = generate_pdf_report(
-            name=name,
-            email=email,
-            phone=phone,
-            education=education,
-            skills=skills,
-            score=score,
-            predicted_role=predicted_role,
         )
-        st.download_button(
-            label="📥 Download PDF Report",
-            data=pdf_bytes,
-            file_name="resume_analysis_report.pdf",
-            mime="application/pdf",
+
+
+    # ----------------------------------------------
+    # 7. Extract resume information
+    # ----------------------------------------------
+
+    try:
+
+        name = extract_name(
+            resume_text
         )
-else:
-    st.info("👆 Upload a PDF or image resume to get started.")
+
+        email = extract_email(
+            resume_text
+        )
+
+        phone = extract_phone(
+            resume_text
+        )
+
+        skills = extract_skills(
+            resume_text
+        )
+
+        education = extract_education(
+            resume_text
+        )
+
+    except Exception as e:
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Information extraction failed: {str(e)}"
+        )
+
+
+    # ----------------------------------------------
+    # 8. Calculate resume score
+    # ----------------------------------------------
+
+    try:
+
+        score = calculate_score(
+            skills,
+            education
+        )
+
+    except Exception as e:
+
+        score = 0
+
+        print(
+            f"Score calculation failed: {e}"
+        )
+
+
+    # ----------------------------------------------
+    # 9. Prepare model input
+    # ----------------------------------------------
+
+    resume_data = {
+
+        "Skills": ", ".join(skills),
+
+        "Experience (Years)": 2,
+
+        "Education": (
+            education[0]
+            if education
+            else "b.tech"
+        ),
+
+        "Certifications": "No",
+
+        "Salary Expectation ($)": 50000,
+
+        "Projects Count": 3,
+
+        "AI Score (0-100)": score
+    }
+
+
+    # ----------------------------------------------
+    # 10. Predict job role
+    # ----------------------------------------------
+
+    predicted_role = "Not Available"
+
+    try:
+
+        predicted_role = predict_job_role(
+            resume_data
+        )
+
+    except Exception as e:
+
+        print(
+            f"Prediction failed: {e}"
+        )
+
+
+    # ----------------------------------------------
+    # 11. Delete uploaded file
+    # ----------------------------------------------
+
+    if os.path.exists(file_path):
+
+        os.remove(file_path)
+
+
+    # ----------------------------------------------
+    # 12. Return JSON response
+    # ----------------------------------------------
+
+    return {
+
+        "success": True,
+
+        "message": "Resume analyzed successfully",
+
+        "data": {
+
+            "name": name,
+
+            "email": email,
+
+            "phone": phone,
+
+            "education": education,
+
+            "skills": skills,
+
+            "resume_score": score,
+
+            "predicted_job_role": predicted_role
+
+        }
+    }

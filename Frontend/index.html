@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ResumeAI — AI Resume Analyzer</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">R</div>
+
+            <div>
+                <h2>ResumeAI</h2>
+                <span>Smart Career Tools</span>
+            </div>
+        </div>
+
+
+        <nav class="navigation">
+
+            <a href="#" class="nav-item active">
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a href="#uploadArea" class="nav-item">
+                <span>↑</span>
+                Analyze Resume
+            </a>
+
+            <a href="#resultsSection" class="nav-item">
+                <span>◈</span>
+                Analysis Results
+            </a>
+
+            <a href="#" class="nav-item">
+                <span>☆</span>
+                Recommendations
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="ai-status">
+                <div class="status-dot"></div>
+
+                <div>
+                    <strong>AI Engine</strong>
+                    <small>System operational</small>
+                </div>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <header class="topbar">
+
+            <div>
+
+                <span class="page-label">
+                    RESUME INTELLIGENCE
+                </span>
+
+                <h1>
+                    AI Resume Analyzer
+                </h1>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <div class="ai-badge">
+                    ✦ AI Powered
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= HERO ================= -->
+
+        <section class="hero-card">
+
+            <div class="hero-content">
+
+                <span class="hero-tag">
+                    SMART RESUME ANALYSIS
+                </span>
+
+                <h2>
+                    Turn your resume into
+                    <span>career insights.</span>
+                </h2>
+
+                <p>
+                    Upload your resume and get an AI-powered
+                    analysis of your skills, education,
+                    resume quality and suitable career path.
+                </p>
+
+            </div>
+
+            <div class="hero-visual">
+
+                <div class="visual-circle">
+
+                    <div class="visual-document">
+
+                        <div class="document-line"></div>
+                        <div class="document-line short"></div>
+                        <div class="document-line"></div>
+                        <div class="document-line tiny"></div>
+
+                        <div class="document-score">
+                            AI
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= WORKSPACE ================= -->
+
+        <section
+            id="uploadArea"
+            class="workspace"
+        >
+
+            <!-- UPLOAD -->
+
+            <div class="panel upload-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+                        <span class="panel-label">
+                            STEP 01
+                        </span>
+
+                        <h2>
+                            Upload Resume
+                        </h2>
+
+                        <p>
+                            Upload your PDF resume to begin.
+                        </p>
+                    </div>
+
+                    <div class="heading-icon">
+                        ↑
+                    </div>
+
+                </div>
+
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".pdf,application/pdf"
+                    hidden
+                >
+
+
+                <div
+                    id="dropzone"
+                    class="dropzone"
+                >
+
+                    <div class="upload-symbol">
+                        ↑
+                    </div>
+
+                    <h3>
+                        Drop your resume here
+                    </h3>
+
+                    <p>
+                        or <strong>browse files</strong>
+                    </p>
+
+                    <small>
+                        PDF • Maximum 10 MB
+                    </small>
+
+                </div>
+
+
+                <!-- FILE -->
+
+                <div
+                    id="fileInfo"
+                    class="file-info hidden"
+                >
+
+                    <div class="file-type">
+                        PDF
+                    </div>
+
+                    <div class="file-details">
+
+                        <strong id="fileName">
+                            resume.pdf
+                        </strong>
+
+                        <span id="fileSize">
+                            0 KB
+                        </span>
+
+                    </div>
+
+                    <button
+                        id="removeFile"
+                        type="button"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <button
+                    id="analyzeBtn"
+                    class="primary-button"
+                    disabled
+                >
+
+                    <span id="buttonText">
+                        Analyze Resume
+                    </span>
+
+                    <span
+                        id="loadingSpinner"
+                        class="spinner hidden"
+                    ></span>
+
+                </button>
+
+
+                <div
+                    id="statusMessage"
+                    class="status-message"
+                ></div>
+
+            </div>
+
+
+            <!-- PREVIEW -->
+
+            <div class="panel preview-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <span class="panel-label">
+                            STEP 02
+                        </span>
+
+                        <h2>
+                            Resume Preview
+                        </h2>
+
+                        <p>
+                            Review your document before analysis.
+                        </p>
+
+                    </div>
+
+                    <span
+                        id="previewStatus"
+                        class="status-pill"
+                    >
+                        Waiting
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="previewEmpty"
+                    class="preview-empty"
+                >
+
+                    <div class="empty-document">
+                        📄
+                    </div>
+
+                    <h3>
+                        No resume selected
+                    </h3>
+
+                    <p>
+                        Your PDF preview will appear here.
+                    </p>
+
+                </div>
+
+
+                <iframe
+                    id="pdfPreview"
+                    class="pdf-preview hidden"
+                    title="Resume PDF Preview"
+                ></iframe>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= RESULTS ================= -->
+
+        <section
+            id="resultsSection"
+            class="results-section hidden"
+        >
+
+            <div class="results-header">
+
+                <div>
+
+                    <span class="panel-label">
+                        AI ANALYSIS
+                    </span>
+
+                    <h2>
+                        Resume Intelligence
+                    </h2>
+
+                    <p>
+                        Your resume analyzed by our AI engine.
+                    </p>
+
+                </div>
+
+                <div class="analysis-complete">
+                    ✓ Analysis Complete
+                </div>
+
+            </div>
+
+
+            <!-- ================= METRICS ================= -->
+
+            <div class="metrics">
+
+                <!-- SCORE -->
+
+                <div class="metric-card score-card">
+
+                    <div class="metric-top">
+
+                        <span>
+                            Resume Score
+                        </span>
+
+                        <div class="metric-icon">
+                            %
+                        </div>
+
+                    </div>
+
+                    <div class="score-area">
+
+                        <div
+                            id="scoreRing"
+                            class="score-ring"
+                            style="--score:0"
+                        >
+
+                            <div class="score-inner">
+
+                                <strong id="scoreValue">
+                                    0
+                                </strong>
+
+                                <span>
+                                    /100
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <strong id="scoreMessage">
+                                Waiting
+                            </strong>
+
+                            <p>
+                                Overall resume quality
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ROLE -->
+
+                <div class="metric-card role-card">
+
+                    <div class="metric-top">
+
+                        <span>
+                            Recommended Role
+                        </span>
+
+                        <div class="metric-icon">
+                            ✦
+                        </div>
+
+                    </div>
+
+                    <div class="role-result">
+
+                        <div class="role-avatar">
+                            AI
+                        </div>
+
+                        <div>
+
+                            <span>
+                                BEST MATCH
+                            </span>
+
+                            <h3 id="predictedRole">
+                                Not analyzed
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CANDIDATE -->
+
+                <div class="metric-card">
+
+                    <div class="metric-top">
+
+                        <span>
+                            Candidate
+                        </span>
+
+                        <div class="metric-icon">
+                            ◉
+                        </div>
+
+                    </div>
+
+                    <h3
+                        id="candidateName"
+                        class="candidate-name"
+                    >
+                        Candidate
+                    </h3>
+
+                    <div class="contact-line">
+                        <span>✉</span>
+                        <strong id="emailValue">—</strong>
+                    </div>
+
+                    <div class="contact-line">
+                        <span>☎</span>
+                        <strong id="phoneValue">—</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= DETAILS ================= -->
+
+            <div class="details-grid">
+
+                <!-- SKILLS -->
+
+                <div class="result-panel">
+
+                    <div class="result-heading">
+
+                        <div class="result-heading-icon">
+                            ◈
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Skills Detected
+                            </h3>
+
+                            <p>
+                                Technical skills found in your resume
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="skillsContainer"
+                        class="skill-list"
+                    >
+                    </div>
+
+                </div>
+
+
+                <!-- EDUCATION -->
+
+                <div class="result-panel">
+
+                    <div class="result-heading">
+
+                        <div class="result-heading-icon">
+                            🎓
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Education
+                            </h3>
+
+                            <p>
+                                Academic qualifications
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <ul
+                        id="educationList"
+                        class="education-list"
+                    >
+                    </ul>
+
+                </div>
+
+
+                <!-- ADDITIONAL -->
+
+                <div class="result-panel full">
+
+                    <div class="result-heading">
+
+                        <div class="result-heading-icon">
+                            ✦
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Resume Profile
+                            </h3>
+
+                            <p>
+                                Additional information extracted from your resume
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="additionalInfo"
+                        class="additional-info"
+                    >
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <span>
+            ResumeAI
+        </span>
+
+        <p>
+            AI-powered resume intelligence platform
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+streamlit
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+pdfplumber
+easyocr
+opencv-python
+Pillow
+spacy
+nltk
+plotly
+joblib
+reportlab
