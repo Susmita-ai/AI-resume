@@ -1,9 +1,25 @@
+import os
 import joblib
 import pandas as pd
 
-# Load trained model and the label encoder used during training
-model = joblib.load("model/model.pkl")
-label_encoder = joblib.load("model/label_encoder.pkl")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "ai_resume",
+    "model",
+    "model.pkl"
+)
+
+ENCODER_PATH = os.path.join(
+    BASE_DIR,
+    "ai_resume",
+    "model",
+    "label_encoder.pkl"
+)
+
+model = joblib.load(MODEL_PATH)
+label_encoder = joblib.load(ENCODER_PATH)
 
 
 def predict_job_role(features):
@@ -12,11 +28,13 @@ def predict_job_role(features):
         Skills, Experience (Years), Education, Certifications,
         Salary Expectation ($), Projects Count, AI Score (0-100)
     """
+
     df = pd.DataFrame([features])
 
     encoded_prediction = model.predict(df)[0]
 
-    # Convert the numeric label back into the original job role string
-    job_role = label_encoder.inverse_transform([encoded_prediction])[0]
+    job_role = label_encoder.inverse_transform(
+        [encoded_prediction]
+    )[0]
 
     return job_role
