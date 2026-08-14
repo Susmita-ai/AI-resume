@@ -2,35 +2,28 @@ import re
 
 
 def extract_name(text):
-    """
-    Simple name extraction without spaCy.
-    Looks at the first few non-empty lines of the resume.
-    """
-
     lines = [
         line.strip()
         for line in text.splitlines()
         if line.strip()
     ]
 
-    for line in lines[:10]:
+    ignored = {
+        "resume",
+        "curriculum vitae",
+        "cv",
+        "profile",
+        "personal details",
+        "contact",
+        "summary",
+        "objective"
+    }
 
-        # Ignore common resume headings
-        ignored = {
-            "resume",
-            "curriculum vitae",
-            "cv",
-            "profile",
-            "personal details",
-            "contact",
-            "summary",
-            "objective"
-        }
+    for line in lines[:10]:
 
         if line.lower() in ignored:
             continue
 
-        # Name should generally contain only letters/spaces
         if re.fullmatch(
             r"[A-Za-z]+(?:\s+[A-Za-z]+){1,3}",
             line
@@ -41,6 +34,7 @@ def extract_name(text):
 
 
 def extract_email(text):
+
     match = re.search(
         r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
         text
@@ -50,6 +44,7 @@ def extract_email(text):
 
 
 def extract_phone(text):
+
     match = re.search(
         r"\+?\d[\d\s\-]{8,15}\d",
         text
@@ -84,13 +79,11 @@ def extract_skills(text):
 
     text = text.lower()
 
-    skills = [
+    return list(set(
         skill
         for skill in SKILL_SET
         if skill in text
-    ]
-
-    return list(set(skills))
+    ))
 
 
 def extract_education(text):
@@ -112,10 +105,8 @@ def extract_education(text):
 
     text = text.lower()
 
-    found = [
+    return list(set(
         edu
         for edu in education
         if edu in text
-    ]
-
-    return list(set(found))
+    ))
