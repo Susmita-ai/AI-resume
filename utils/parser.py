@@ -3,8 +3,7 @@ import pdfplumber
 
 def extract_text_from_pdf(pdf_path):
     """
-    Extract text from a PDF using pdfplumber.
-    Works with PDFs that contain a real text layer.
+    Extract text from a text-based PDF.
     """
 
     text = ""
@@ -21,10 +20,10 @@ def extract_text_from_pdf(pdf_path):
 
 def extract_text_from_image(image_path):
     """
-    Image OCR is not enabled in the Vercel version yet.
+    Image OCR is not enabled in the Vercel deployment yet.
     """
 
     raise RuntimeError(
-        "Image resume analysis is currently unavailable on the deployed API. "
-        "Please upload a text-based PDF resume."
+        "Image resume analysis is currently unavailable. "
+        "Please upload a PDF resume."
     )
