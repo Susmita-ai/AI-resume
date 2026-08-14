@@ -1,11 +1,9 @@
 fastapi
 uvicorn
 python-multipart
-
 pandas
 numpy
 scikit-learn
 joblib
-
 pdfplumber
 pillow
