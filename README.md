@@ -8,13 +8,13 @@ Create or activate the virtual environment, then install dependencies:
 
 ```powershell
 .\resume\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 Start the API from the repository root:
 
 ```powershell
-uvicorn app:app --reload --port 8000
+uvicorn backend.app:app --reload --port 8000
 ```
 
 The API is available at `http://localhost:8000`. Upload a PDF to `POST /analyze-resume`, then send its returned `resume_id` with a job description to `POST /ats-analysis`.

@@ -1,4 +1,4 @@
-from utils.extractor import (
+from backend.utils.extractor import (
     extract_certifications,
     extract_experience,
     extract_projects,

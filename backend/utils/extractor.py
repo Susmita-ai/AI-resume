@@ -501,4 +501,3 @@ def extract_experience_years(text):
         )
 
     return 0.0
->>>>>>> 3cadcb4 (Initial commit)

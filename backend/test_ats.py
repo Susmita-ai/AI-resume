@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from app import UPLOAD_FOLDER
-from utils.ats_analyzer import analyze_ats
+from backend.utils.ats_analyzer import analyze_ats
 
 
 def test_ats_analysis_reports_matches_and_gaps():

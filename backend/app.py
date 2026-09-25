@@ -7,11 +7,11 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from utils.parser import (
+from backend.utils.parser import (
     extract_text_from_pdf
 )
 
-from utils.extractor import (
+from backend.utils.extractor import (
     extract_name,
     extract_email,
     extract_phone,
@@ -23,10 +23,10 @@ from utils.extractor import (
     extract_experience_years
 )
 
-from utils.predictor import predict_job_role
-from utils.scorer import calculate_score
-from utils.resume_profile import build_resume_profile
-from utils.ats_analyzer import analyze_ats
+from backend.utils.predictor import predict_job_role
+from backend.utils.scorer import calculate_score
+from backend.utils.resume_profile import build_resume_profile
+from backend.utils.ats_analyzer import analyze_ats
 
 
 # ==================================================
