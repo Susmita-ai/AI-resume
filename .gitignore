@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyc
 ai_resume
 # Virtual environment
 resume/
@@ -11,6 +12,7 @@ venv/
 # Uploaded resumes
 uploads/*
 ai_resume/uploads/*
+dist/
 
 # Environment variables
 .env

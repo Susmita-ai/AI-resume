@@ -1,50 +1,36 @@
-from utils.parser import extract_text_from_pdf
-
 from utils.extractor import (
-    extract_name,
-    extract_email,
-    extract_phone,
-    extract_skills,
-    extract_education
+    extract_certifications,
+    extract_experience,
+    extract_projects,
 )
 
-from utils.predictor import predict_job_role
 
-# Read Resume
-text = extract_text_from_pdf("uploads/resume.pdf")
+SAMPLE_TEXT = """
+John Doe
 
-# Extract Information
-name = extract_name(text)
-email = extract_email(text)
-phone = extract_phone(text)
-skills = extract_skills(text)
-education = extract_education(text)
+EXPERIENCE
+Software Engineer at ABC Company
+Developed Python applications
 
-print("="*50)
-print("Name :", name)
-print("Email :", email)
-print("Phone :", phone)
-print("Skills :", skills)
-print("Education :", education)
+PROJECTS
+AI Resume Analyzer
+Built a resume analysis system using Python
 
-# ------------------------
-# Prepare model input
-# ------------------------
+CERTIFICATIONS
+AWS Cloud Practitioner
 
-resume_data = {
-    "Skills": ", ".join(skills),
-    "Experience (Years)": 2,
-    "Education": education[0] if education else "b.tech",
-    "Certifications": "No",
-    "Salary Expectation ($)": 50000,
-    "Projects Count": 3,
-    "AI Score (0-100)": 75
-}
+EDUCATION
+B.Tech Computer Science
+"""
 
-try:
-    role = predict_job_role(resume_data)
 
-    print("\nPredicted Job Role :", role)
-
-except Exception as e:
-    print("\nPrediction Error:", e)
+def test_extract_resume_sections():
+    assert extract_experience(SAMPLE_TEXT) == [
+        "Software Engineer at ABC Company",
+        "Developed Python applications",
+    ]
+    assert extract_projects(SAMPLE_TEXT) == [
+        "AI Resume Analyzer",
+        "Built a resume analysis system using Python",
+    ]
+    assert extract_certifications(SAMPLE_TEXT) == ["AWS Cloud Practitioner"]

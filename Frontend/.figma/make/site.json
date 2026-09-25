@@ -1,0 +1,26 @@
+{
+  "title": "AI Resume Analyzer",
+  "description": "Upload a resume and get ATS insight, skill matching, and recruiter-ready analysis.",
+  "language": "en",
+  "robots": {
+    "index": true
+  },
+  "icons": {
+    "icon": ""
+  },
+  "openGraph": {
+    "image": ""
+  },
+  "analytics": {
+    "googleAnalyticsId": ""
+  },
+  "customScripts": {
+    "headStart": "",
+    "headEnd": "",
+    "bodyStart": "",
+    "bodyEnd": ""
+  },
+  "accessibility": {
+    "addBypassLinks": false
+  }
+}
