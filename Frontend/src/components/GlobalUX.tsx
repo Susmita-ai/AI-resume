@@ -262,7 +262,7 @@ export function HelpPanel({ open, onClose }: HelpPanelProps) {
 
   const articles: Record<string, { title: string; summary: string }[]> = {
     "Getting Started": [
-      { title: "How to upload your resume", summary: "Drag and drop or click to upload a PDF or DOCX file." },
+      { title: "How to upload your resume", summary: "Drag and drop or click to upload a PDF file." },
       { title: "Understanding your analysis report", summary: "Your report covers ATS score, job match, skills, and recommendations." },
     ],
     "Resume Analysis": [

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { analyzeAts, analyzeResume, type AtsAnalysis, type ResumeAnalysis } from "../lib/api";
 import {
   PrimaryButton, SecondaryButton, Tag,
   IconSparkles, IconUpload, IconFileText, IconCheck, IconX,
@@ -26,7 +27,7 @@ function formatBytes(bytes: number): string {
 
 function validateFile(file: File): UploadState {
   const ext = file.name.split(".").pop()?.toLowerCase();
-  if (!["pdf", "docx", "doc"].includes(ext ?? "")) return "error-format";
+  if (ext !== "pdf") return "error-format";
   if (file.size > 10 * 1024 * 1024) return "error-size";
   return "uploaded";
 }
@@ -104,7 +105,7 @@ function UploadDropZone({ onFile }: { onFile: (file: File) => void }) {
           : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"
       }`}
     >
-      <input ref={inputRef} type="file" accept=".pdf,.docx,.doc" className="hidden" onChange={handleChange} />
+      <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={handleChange} />
 
       {/* Icon */}
       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
@@ -122,7 +123,6 @@ function UploadDropZone({ onFile }: { onFile: (file: File) => void }) {
         </p>
         <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
           <Tag color="blue">PDF</Tag>
-          <Tag color="purple">DOCX</Tag>
           <span className="text-slate-300">·</span>
           <span>Max 10 MB</span>
         </div>
@@ -165,7 +165,7 @@ function UploadedFileCard({ file, onRemove, onReplace }: {
         </div>
         <p className="text-xs text-slate-500">{file.size} · {isPdf ? "PDF Document" : "Word Document"}</p>
         <p className="text-xs text-emerald-600 font-medium mt-0.5 flex items-center gap-1">
-          <IconCheck size={11} /> Uploaded successfully
+          <IconCheck size={11} /> Ready to analyze
         </p>
       </div>
 
@@ -190,7 +190,7 @@ function UploadErrorCard({ state, onRetry }: { state: UploadState; onRetry: () =
   const messages: Record<string, { title: string; reasons: string[] }> = {
     "error-format": {
       title: "Unsupported file format",
-      reasons: ["Only PDF and DOCX files are accepted", "Please check the file extension", "Rename the file if the extension is missing"],
+      reasons: ["Only PDF files are accepted by the resume analyzer", "Please check the file extension", "Rename the file if the extension is missing"],
     },
     "error-size": {
       title: "File is too large",
@@ -244,30 +244,62 @@ const DEFAULT_OPTIONS = {
 
 // ─── Form Screen ──────────────────────────────────────────────────────────────
 
-function FormScreen({ onStart }: { onStart: () => void }) {
+interface AnalysisResult {
+  resume: ResumeAnalysis;
+  ats: AtsAnalysis;
+}
+
+function FormScreen({
+  onStart,
+  onComplete,
+  onFailure,
+}: {
+  onStart: () => void;
+  onComplete: (result: AnalysisResult) => void;
+  onFailure: () => void;
+}) {
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [jobDesc, setJobDesc] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [company, setCompany] = useState("");
   const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const [jdError, setJdError] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const replaceRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
     const validated = validateFile(file);
-    if (validated !== "uploaded") { setUploadState(validated); return; }
-    // Show uploading animation briefly
-    setUploadState("uploading");
+    if (validated !== "uploaded") {
+      setSelectedFile(null);
+      setFileInfo(null);
+      setUploadState(validated);
+      return;
+    }
+    setSelectedFile(file);
+    setUploadState("uploaded");
     setFileInfo({ name: file.name, size: formatBytes(file.size), rawSize: file.size });
-    setTimeout(() => setUploadState("uploaded"), 900);
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!jobDesc.trim()) { setJdError(true); return; }
-    if (uploadState !== "uploaded") return;
+    if (uploadState !== "uploaded" || !selectedFile) return;
     setJdError(false);
+    setApiError("");
+    setIsSubmitting(true);
     onStart();
+    try {
+      const resume = await analyzeResume(selectedFile);
+      const ats = await analyzeAts(resume.resume_id, jobDesc.trim());
+      onComplete({ resume, ats });
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Analysis failed. Please try again.");
+      onFailure();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleOption = (key: keyof typeof DEFAULT_OPTIONS) => {
@@ -283,7 +315,7 @@ function FormScreen({ onStart }: { onStart: () => void }) {
   ];
 
   const canAnalyze = uploadState === "uploaded" && jobDesc.trim().length > 0;
-  const isUploading = uploadState === "uploading";
+  const isUploading = uploadState === "uploading" || isSubmitting;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -330,10 +362,10 @@ function FormScreen({ onStart }: { onStart: () => void }) {
             <>
               <UploadedFileCard
                 file={fileInfo}
-                onRemove={() => { setUploadState("idle"); setFileInfo(null); }}
+                onRemove={() => { setUploadState("idle"); setFileInfo(null); setSelectedFile(null); }}
                 onReplace={() => replaceRef.current?.click()}
               />
-              <input ref={replaceRef} type="file" accept=".pdf,.docx,.doc" className="hidden"
+              <input ref={replaceRef} type="file" accept=".pdf" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             </>
           )}
@@ -414,6 +446,12 @@ function FormScreen({ onStart }: { onStart: () => void }) {
             Analyze Resume with AI
           </PrimaryButton>
 
+          {apiError && (
+            <p role="alert" className="text-sm text-red-600 text-center">
+              {apiError}
+            </p>
+          )}
+
           {!canAnalyze && (
             <p className="text-xs text-slate-400 text-center">
               {uploadState !== "uploaded" ? "Upload a resume to continue" : "Add a job description to continue"}
@@ -443,16 +481,16 @@ const ANALYSIS_STEPS = [
   "Generating recommendations",
 ];
 
-function LoadingScreen({ onComplete }: { onComplete: () => void }) {
+function LoadingScreen() {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Animate progress 0→100 over ~4 seconds
+    // Keep the progress below completion until the API requests finish.
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 100) { clearInterval(interval); return 100; }
-        return prev + 1.5;
+        if (prev >= 95) { clearInterval(interval); return 95; }
+        return Math.min(prev + 1.5, 95);
       });
     }, 60);
 
@@ -460,15 +498,11 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
     const stepTimings = [0, 600, 1200, 1900, 2700, 3400];
     const timers = stepTimings.map((t, i) => setTimeout(() => setCurrentStep(i), t));
 
-    // Complete
-    const done = setTimeout(onComplete, 4500);
-
     return () => {
       clearInterval(interval);
       timers.forEach(clearTimeout);
-      clearTimeout(done);
     };
-  }, [onComplete]);
+  }, []);
 
   const clampedProgress = Math.min(Math.round(progress), 100);
 
@@ -587,11 +621,19 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
 
 // ─── Success Screen ───────────────────────────────────────────────────────────
 
-function SuccessScreen({ onViewAnalysis, onReset }: { onViewAnalysis: () => void; onReset: () => void }) {
+function SuccessScreen({
+  result,
+  onViewAnalysis,
+  onReset,
+}: {
+  result: AnalysisResult;
+  onViewAnalysis: () => void;
+  onReset: () => void;
+}) {
   const scores = [
-    { label: "Resume Score", value: "82", unit: "/100", color: "#4f6ef7", bg: "from-blue-50 to-blue-100/60" },
-    { label: "ATS Score", value: "88", unit: "/100", color: "#8b5cf6", bg: "from-purple-50 to-purple-100/60" },
-    { label: "Job Match", value: "79", unit: "%", color: "#0ea5e9", bg: "from-sky-50 to-sky-100/60" },
+    { label: "Resume Score", value: Math.round(result.resume.resume_score), unit: "/100", color: "#4f6ef7", bg: "from-blue-50 to-blue-100/60" },
+    { label: "ATS Score", value: Math.round(result.ats.ats_score), unit: "/100", color: "#8b5cf6", bg: "from-purple-50 to-purple-100/60" },
+    { label: "Job Match", value: Math.round(result.ats.skill_match_percentage), unit: "%", color: "#0ea5e9", bg: "from-sky-50 to-sky-100/60" },
   ];
 
   return (
@@ -708,20 +750,26 @@ function AnalyzeNavbar({ onBack }: { onBack: () => void }) {
 
 export default function AnalyzePage({ onBack, onViewDashboard }: { onBack: () => void; onViewDashboard: () => void }) {
   const [step, setStep] = useState<WorkflowStep>("form");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50">
       <AnalyzeNavbar onBack={onBack} />
 
       <main className="pt-28 pb-20 px-4 sm:px-6 lg:px-8">
-        {step === "form" && (
-          <FormScreen onStart={() => setStep("loading")} />
-        )}
+        <div className={step === "form" ? "" : "hidden"}>
+          <FormScreen
+            onStart={() => setStep("loading")}
+            onComplete={analysis => { setResult(analysis); setStep("complete"); }}
+            onFailure={() => setStep("form")}
+          />
+        </div>
         {step === "loading" && (
-          <LoadingScreen onComplete={() => setStep("complete")} />
+          <LoadingScreen />
         )}
-        {step === "complete" && (
+        {step === "complete" && result && (
           <SuccessScreen
+            result={result}
             onViewAnalysis={onViewDashboard}
             onReset={() => setStep("form")}
           />

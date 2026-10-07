@@ -183,7 +183,7 @@ function FeaturesSection() {
 // ─── How It Works ─────────────────────────────────────────────────────────────
 
 const steps = [
-  { num: "01", icon: <IconUpload />, title: "Upload Resume", desc: "Upload your PDF or DOCX resume securely. Your data is processed privately." },
+  { num: "01", icon: <IconUpload />, title: "Upload Resume", desc: "Upload your PDF resume securely. Your data is processed privately." },
   { num: "02", icon: <IconFileText />, title: "Add Job Description", desc: "Paste the job description you want to target for a tailored analysis." },
   { num: "03", icon: <IconBrain />, title: "AI Analysis", desc: "AI analyzes skills, experience, keywords, ATS compatibility, and job relevance in seconds." },
   { num: "04", icon: <IconSparkles />, title: "Get Insights", desc: "Receive your scores, missing skills list, and prioritized improvement recommendations." },
