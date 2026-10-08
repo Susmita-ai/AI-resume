@@ -13,7 +13,7 @@ function getApiBaseUrl(): string {
   if (configuredUrl) return configuredUrl.replace(/\/+$/, "");
   if (import.meta.env.DEV) return "http://localhost:8000";
 
-  return "https://ai-resume-eomi.onrender.com";
+  return "/api";
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {

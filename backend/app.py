@@ -91,6 +91,7 @@ class ATSRequest(BaseModel):
 # ==================================================
 
 @app.get("/")
+@app.get("/api")
 def home():
 
     return {
@@ -105,6 +106,7 @@ def home():
 # ==================================================
 
 @app.post("/analyze-resume")
+@app.post("/api/analyze-resume")
 async def analyze_resume(
     file: UploadFile = File(...)
 ):
@@ -452,6 +454,7 @@ async def analyze_resume(
 # ==================================================
 
 @app.post("/ats-analysis")
+@app.post("/api/ats-analysis")
 def ats_analysis(
     request: ATSRequest
 ):
